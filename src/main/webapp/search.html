@@ -1,0 +1,146 @@
+ <!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Поиск</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h3>Социальная сеть</h3>
+            <ul class="nav-menu">
+                <li><a href="main.html">Лента</a></li>
+                <li><a href="profile.html">Профиль</a></li>
+                <li><a href="search.html">Поиск</a></li>
+                <li><a href="messages.html">Сообщения</a></li>
+                <li><a href="#" onclick="logout()">Выход</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="search-container">
+            <div class="search-tabs">
+                <button class="tab-btn active" onclick="switchTab('users')">Поиск пользователей</button>
+                <button class="tab-btn" onclick="switchTab('news')">Поиск новостей</button>
+            </div>
+            
+            <div id="usersSearch" class="tab-content active">
+                <h3>Поиск пользователей</h3>
+                <form id="userSearchForm">
+                    <div class="search-row">
+                        <input type="text" id="searchFirstName" placeholder="Имя">
+                        <input type="text" id="searchLastName" placeholder="Фамилия">
+                        <input type="text" id="searchCity" placeholder="Город">
+                        <button type="submit" class="btn btn-primary">Найти</button>
+                    </div>
+                </form>
+                <div id="userResults" class="search-results"></div>
+            </div>
+            
+            <div id="newsSearch" class="tab-content">
+                <h3>Поиск новостей</h3>
+                <form id="newsSearchForm">
+                    <div class="search-row">
+                        <input type="text" id="searchKeyword" placeholder="Ключевые слова">
+                        <button type="submit" class="btn btn-primary">Найти</button>
+                    </div>
+                </form>
+                <div id="newsResults" class="search-results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/app.js"></script>
+    <script>
+        $(document).ready(function() {
+            checkAuth();
+        });
+        
+        function switchTab(tab) {
+            $('.tab-content').removeClass('active');
+            $('.tab-btn').removeClass('active');
+            
+            if (tab === 'users') {
+                $('#usersSearch').addClass('active');
+                $('.tab-btn:first').addClass('active');
+            } else {
+                $('#newsSearch').addClass('active');
+                $('.tab-btn:last').addClass('active');
+            }
+        }
+        
+        $('#userSearchForm').submit(function(e) {
+            e.preventDefault();
+            
+            $.ajax({
+                url: 'api/users/search',
+                method: 'GET',
+                data: {
+                    firstName: $('#searchFirstName').val(),
+                    lastName: $('#searchLastName').val(),
+                    city: $('#searchCity').val()
+                },
+                success: function(users) {
+                    $('#userResults').empty();
+                    if (users.length === 0) {
+                        $('#userResults').html('<p>Пользователи не найдены</p>');
+                    } else {
+                        users.forEach(function(user) {
+                            var age = user.birthDate ? 
+                                new Date().getFullYear() - new Date(user.birthDate).getFullYear() : '';
+                            
+                            var userHtml = `
+                                <div class="user-card">
+                                    <h4>${user.firstName} ${user.lastName}</h4>
+                                    <p>Город: ${user.city || 'Не указан'}</p>
+                                    ${age ? '<p>Возраст: ' + age + '</p>' : ''}
+                                    <button onclick="sendMessage(${user.id}, '${user.firstName} ${user.lastName}')" 
+                                            class="btn btn-small">Написать сообщение</button>
+                                </div>
+                            `;
+                            $('#userResults').append(userHtml);
+                        });
+                    }
+                }
+            });
+        });
+        
+        $('#newsSearchForm').submit(function(e) {
+            e.preventDefault();
+            
+            $.ajax({
+                url: 'api/news/search',
+                method: 'GET',
+                data: {
+                    keyword: $('#searchKeyword').val()
+                },
+                success: function(newsList) {
+                    $('#newsResults').empty();
+                    if (newsList.length === 0) {
+                        $('#newsResults').html('<p>Новости не найдены</p>');
+                    } else {
+                        newsList.forEach(function(news) {
+                            var newsHtml = `
+                                <div class="news-item">
+                                    <h4>${news.title}</h4>
+                                    <p>${news.content}</p>
+                                    <small>Автор: ${news.authorName} | 
+                                           Дата: ${formatDate(news.createdAt)}</small>
+                                </div>
+                            `;
+                            $('#newsResults').append(newsHtml);
+                        });
+                    }
+                }
+            });
+        });
+        
+        function sendMessage(userId, userName) {
+            window.location.href = `messages.html?to=${userId}&name=${userName}`;
+        }
+    </script>
+</body>
+</html>
