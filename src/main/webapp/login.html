@@ -7,54 +7,50 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="form-container">
-            <h2>Вход в систему</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" id="email" required value="admin@social.net">
-                </div>
-                <div class="form-group">
-                    <label>Пароль:</label>
-                    <input type="password" id="password" required value="admin">
-                </div>
-                <button type="submit" class="btn btn-primary">Войти</button>
-                <a href="register.html" class="link">Нет аккаунта? Зарегистрируйтесь</a>
-            </form>
-            <div id="message" class="message"></div>
-        </div>
+<div class="container">
+    <div class="form-container">
+        <h2>Вход в систему</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Пароль:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Войти</button>
+            <a href="register.html" class="link">Нет аккаунта? Зарегистрируйтесь</a>
+        </form>
+        <div id="message" class="message"></div>
     </div>
-    
-    <script>
-        $(document).ready(function() {
-            $('#loginForm').submit(function(e) {
-                e.preventDefault();
-                
-                console.log('Отправка формы входа...');
-                
-                $.ajax({
-                    url: 'api/auth/login',
-                    method: 'POST',
-                    data: {
-                        email: $('#email').val(),
-                        password: $('#password').val()
-                    },
-                    success: function(data) {
-                        console.log('Ответ сервера:', data);
-                        if (data.success) {
-                            window.location.href = 'main.html';
-                        } else {
-                            $('#message').removeClass('success').addClass('error').text(data.error).show();
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Ошибка:', error);
-                        $('#message').removeClass('success').addClass('error').text('Ошибка сервера: ' + error).show();
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#loginForm').submit(function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: '/api/auth/login',
+                method: 'POST',
+                data: {
+                    email: $('#email').val(),
+                    password: $('#password').val()
+                },
+                success: function(data) {
+                    if (data.success) {
+                        window.location.href = '/main.html';
+                    } else {
+                        $('#message').removeClass('success').addClass('error').text(data.error).show();
                     }
-                });
+                },
+                error: function(xhr) {
+                    $('#message').removeClass('success').addClass('error').text('Ошибка сервера').show();
+                }
             });
         });
-    </script>
+    });
+</script>
 </body>
 </html>

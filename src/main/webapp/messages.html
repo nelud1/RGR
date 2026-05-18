@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -7,116 +7,92 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h3>Социальная сеть</h3>
-            <ul class="nav-menu">
-                <li><a href="main.html">Лента</a></li>
-                <li><a href="profile.html">Профиль</a></li>
-                <li><a href="search.html">Поиск</a></li>
-                <li><a href="messages.html">Сообщения</a></li>
-                <li><a href="#" onclick="logout()">Выход</a></li>
-            </ul>
-        </div>
-    </nav>
-    
-    <div class="container">
-        <div class="messages-container">
-            <div class="send-message">
-                <h3>Отправить сообщение</h3>
-                <form id="messageForm">
-                    <div class="form-group">
-                        <label>Кому (ID пользователя):</label>
-                        <input type="number" id="receiverId" required>
-                        <span id="receiverName"></span>
-                    </div>
-                    <div class="form-group">
-                        <label>Тема:</label>
-                        <input type="text" id="subject" maxlength="30" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Сообщение:</label>
-                        <textarea id="content" maxlength="500" rows="5" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Отправить</button>
-                </form>
-                <div id="sendMessage" class="message"></div>
-            </div>
-            
-            <div class="inbox">
-                <h3>Входящие сообщения</h3>
-                <div id="messagesList"></div>
-            </div>
-        </div>
+<nav class="navbar">
+    <div class="nav-container">
+        <h3>Социальная сеть</h3>
+        <ul class="nav-menu">
+            <li><a href="main.html">Лента</a></li>
+            <li><a href="profile.html">Профиль</a></li>
+            <li><a href="friends.html">Друзья</a></li>
+            <li><a href="messages.html">Сообщения</a></li>
+            <li><a href="search.html">Поиск</a></li>
+            <li><a href="#" onclick="logout()">Выход</a></li>
+        </ul>
     </div>
-    
-    <script src="js/app.js"></script>
-    <script>
-        $(document).ready(function() {
-            checkAuth();
-            loadInbox();
-            
-            // Проверяем параметры URL для автозаполнения получателя
-            const urlParams = new URLSearchParams(window.location.search);
-            const toId = urlParams.get('to');
-            const toName = urlParams.get('name');
-            if (toId) {
-                $('#receiverId').val(toId);
-                if (toName) {
-                    $('#receiverName').text('(' + toName + ')');
+</nav>
+
+<div class="container">
+    <div class="inbox-container">
+        <h3>Входящие сообщения</h3>
+        <div id="messagesList"></div>
+    </div>
+</div>
+
+<script>
+    function logout() {
+        $.ajax({
+            url: '/api/auth/logout',
+            method: 'GET',
+            success: function() {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    function formatDate(dateString) {
+        var date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function loadInbox() {
+        $.ajax({
+            url: '/api/messages/inbox',
+            method: 'GET',
+            success: function(messages) {
+                $('#messagesList').empty();
+                if (messages.length === 0) {
+                    $('#messagesList').html('<p>Нет сообщений</p>');
+                } else {
+                    for (var i = 0; i < messages.length; i++) {
+                        var msg = messages[i];
+                        var readClass = msg.isRead ? '' : 'unread';
+                        var html = '<div class="message-item ' + readClass + '" onclick="viewMessage(' + msg.id + ')">' +
+                            '<div class="message-header">' +
+                                '<strong>' + escapeHtml(msg.senderName) + '</strong>' +
+                                '<span>' + formatDate(msg.createdAt) + '</span>' +
+                            '</div>' +
+                            '<div class="message-subject">Тема: ' + escapeHtml(msg.subject) + '</div>' +
+                            '<div class="message-content">' + escapeHtml(msg.body.substring(0, 100)) + (msg.body.length > 100 ? '...' : '') + '</div>' +
+                        '</div>';
+                        $('#messagesList').append(html);
+                    }
                 }
             }
         });
-        
-        $('#messageForm').submit(function(e) {
-            e.preventDefault();
-            
-            $.ajax({
-                url: 'api/messages/send',
-                method: 'POST',
-                data: {
-                    receiverId: $('#receiverId').val(),
-                    subject: $('#subject').val(),
-                    content: $('#content').val()
-                },
-                success: function(data) {
-                    if (data.success) {
-                        showMessage('Сообщение отправлено', 'success', '#sendMessage');
-                        $('#subject').val('');
-                        $('#content').val('');
-                    } else {
-                        showMessage(data.error, 'error', '#sendMessage');
-                    }
+    }
+
+    function viewMessage(messageId) {
+        window.location.href = 'message-view.html?id=' + messageId;
+    }
+
+    $(document).ready(function() {
+        $.ajax({
+            url: '/api/auth/me',
+            method: 'GET',
+            success: function(data) {
+                if (!data.authenticated) {
+                    window.location.href = 'login.html';
                 }
-            });
+            }
         });
-        
-        function loadInbox() {
-            $.ajax({
-                url: 'api/messages/inbox',
-                method: 'GET',
-                success: function(messages) {
-                    $('#messagesList').empty();
-                    if (messages && messages.length > 0) {
-                        messages.forEach(function(msg) {
-                            var messageHtml = `
-                                <div class="message-item ${msg.read ? '' : 'unread'}">
-                                    <div class="message-header">
-                                        <strong>От: ${msg.senderName}</strong>
-                                        <span>${formatDate(msg.createdAt)}</span>
-                                    </div>
-                                    <div class="message-subject">Тема: ${msg.subject}</div>
-                                    <div class="message-content">${msg.content}</div>
-                                </div>
-                            `;
-                            $('#messagesList').append(messageHtml);
-                        });
-                    } else {
-                        $('#messagesList').html('<p>Нет сообщений</p>');
-                    }
-                }
-            });
-        }
-    </script>
+
+        loadInbox();
+    });
+</script>
 </body>
 </html>
