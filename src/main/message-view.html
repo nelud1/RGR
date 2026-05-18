@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Просмотр сообщения</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <h3>Социальная сеть</h3>
+        <ul class="nav-menu">
+            <li><a href="main.html">Лента</a></li>
+            <li><a href="profile.html">Профиль</a></li>
+            <li><a href="friends.html">Друзья</a></li>
+            <li><a href="messages.html">Сообщения</a></li>
+            <li><a href="search.html">Поиск</a></li>
+            <li><a href="#" onclick="logout()">Выход</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="message-view-container">
+        <div id="messageContent"></div>
+        <button onclick="window.location.href='messages.html'" class="btn btn-primary">Назад к сообщениям</button>
+    </div>
+</div>
+
+<script>
+    function logout() {
+        $.ajax({
+            url: '/api/auth/logout',
+            method: 'GET',
+            success: function() {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    function formatDate(dateString) {
+        var date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    $(document).ready(function() {
+        $.ajax({
+            url: '/api/auth/me',
+            method: 'GET',
+            success: function(data) {
+                if (!data.authenticated) {
+                    window.location.href = 'login.html';
+                }
+            }
+        });
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var messageId = urlParams.get('id');
+
+        if (messageId) {
+            $.ajax({
+                url: '/api/messages/' + messageId,
+                method: 'GET',
+                success: function(message) {
+                    if (message.error) {
+                        $('#messageContent').html('<p>Сообщение не найдено</p>');
+                        return;
+                    }
+
+                    var html = '<div class="message-card">' +
+                        '<h3>' + escapeHtml(message.subject) + '</h3>' +
+                        '<div class="message-meta">' +
+                            '<strong>От:</strong> ' + escapeHtml(message.senderName) + '<br>' +
+                            '<strong>Дата:</strong> ' + formatDate(message.createdAt) +
+                        '</div>' +
+                        '<div class="message-body">' + escapeHtml(message.body) + '</div>' +
+                    '</div>';
+                    $('#messageContent').html(html);
+                },
+                error: function() {
+                    $('#messageContent').html('<p>Ошибка загрузки сообщения</p>');
+                }
+            });
+        } else {
+            $('#messageContent').html('<p>Сообщение не указано</p>');
+        }
+    });
+</script>
+</body>
+</html>
