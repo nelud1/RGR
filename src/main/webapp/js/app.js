@@ -1,4 +1,3 @@
- // Общие функции
 function showMessage(text, type, container = '#message') {
     $(container).removeClass('success error').addClass(type).text(text).show();
     setTimeout(() => $(container).hide(), 5000);
@@ -26,7 +25,6 @@ function logout() {
     });
 }
 
-// Функции для ленты новостей
 function loadNewsFeed() {
     $.ajax({
         url: 'api/news/feed',
