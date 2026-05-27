@@ -22,29 +22,20 @@ public class UserRepository {
 
     public User findByEmail(String email) {
         String sql = "SELECT * FROM users WHERE LOWER(email) = LOWER(?)";
-        try {
-            return jdbcTemplate.queryForObject(sql, new UserRowMapper(), email);
-        } catch (Exception e) {
-            return null;
-        }
+        List<User> users = jdbcTemplate.query(sql, new UserRowMapper(), email);
+        return users.isEmpty() ? null : users.get(0);
     }
 
     public User findByActivationToken(String token) {
         String sql = "SELECT * FROM users WHERE activation_token = ?";
-        try {
-            return jdbcTemplate.queryForObject(sql, new UserRowMapper(), token);
-        } catch (Exception e) {
-            return null;
-        }
+        List<User> users = jdbcTemplate.query(sql, new UserRowMapper(), token);
+        return users.isEmpty() ? null : users.get(0);
     }
 
     public User findById(int id) {
         String sql = "SELECT * FROM users WHERE id = ?";
-        try {
-            return jdbcTemplate.queryForObject(sql, new UserRowMapper(), id);
-        } catch (Exception e) {
-            return null;
-        }
+        List<User> users = jdbcTemplate.query(sql, new UserRowMapper(), id);
+        return users.isEmpty() ? null : users.get(0);
     }
 
     public List<User> findAll() {

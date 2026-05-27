@@ -2,178 +2,106 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Профиль</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title data-i18n="app.title">Социальная сеть</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/app.js"></script>
+    <script src="/js/i18n.js"></script>
 </head>
 <body>
 <nav class="navbar">
     <div class="nav-container">
-        <h3>Социальная сеть</h3>
+        <h3 data-i18n="app.title">Социальная сеть</h3>
         <ul class="nav-menu">
-            <li><a href="main.html">Лента</a></li>
-            <li><a href="profile.html">Профиль</a></li>
-            <li><a href="friends.html">Друзья</a></li>
-            <li><a href="messages.html">Сообщения</a></li>
-            <li><a href="search.html">Поиск</a></li>
-            <li><a href="#" onclick="logout()">Выход</a></li>
+            <li><a href="main.html" data-i18n="nav.feed">Лента</a></li>
+            <li><a href="profile.html" data-i18n="nav.profile">Профиль</a></li>
+            <li><a href="friends.html" data-i18n="nav.friends">Друзья</a></li>
+            <li><a href="messages.html" data-i18n="nav.messages">Сообщения</a></li>
+            <li><a href="search.html" data-i18n="nav.search">Поиск</a></li>
+            <li><a href="#" id="logoutBtn" data-i18n="app.logout">Выход</a></li>
         </ul>
     </div>
 </nav>
 
 <div class="container">
     <div class="profile-container">
-        <h2>Мой профиль</h2>
+        <h2 data-i18n="profile.title">Мой профиль</h2>
 
         <div class="avatar-section">
             <img id="avatar" src="" alt="Аватар" style="max-width: 150px; max-height: 150px; border-radius: 50%;">
             <form id="avatarForm" enctype="multipart/form-data">
                 <input type="file" id="avatarFile" accept="image/jpeg,image/png">
-                <button type="submit" class="btn btn-small">Загрузить аватар</button>
+                <button type="submit" class="btn btn-small" data-i18n="profile.avatar">Загрузить аватар</button>
             </form>
             <div id="avatarMessage" class="message"></div>
         </div>
 
         <form id="profileForm">
             <div class="form-group">
-                <label>Имя:</label>
+                <label data-i18n="profile.firstname">Имя:</label>
                 <input type="text" id="firstName" required>
             </div>
             <div class="form-group">
-                <label>Фамилия:</label>
+                <label data-i18n="profile.lastname">Фамилия:</label>
                 <input type="text" id="lastName" required>
             </div>
             <div class="form-group">
-                <label>Email:</label>
+                <label data-i18n="profile.email">Email:</label>
                 <input type="email" id="email" disabled>
             </div>
             <div class="form-group">
-                <label>Дата рождения:</label>
+                <label data-i18n="profile.birthdate">Дата рождения:</label>
                 <input type="date" id="birthDate">
             </div>
             <div class="form-group">
-                <label>Пол:</label>
+                <label data-i18n="profile.gender">Пол:</label>
                 <select id="gender">
-                    <option value="">Не указан</option>
-                    <option value="male">Мужской</option>
-                    <option value="female">Женский</option>
+                    <option value="" data-i18n="profile.gender.not_specified">Не указан</option>
+                    <option value="male" data-i18n="profile.gender.male">Мужской</option>
+                    <option value="female" data-i18n="profile.gender.female">Женский</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Город:</label>
+                <label data-i18n="profile.city">Город:</label>
                 <input type="text" id="city" maxlength="100">
             </div>
             <div class="form-group">
-                <label>О себе:</label>
+                <label data-i18n="profile.about">О себе:</label>
                 <textarea id="about" maxlength="500" rows="4"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            <button type="submit" class="btn btn-primary" data-i18n="app.save">Сохранить изменения</button>
         </form>
         <div id="message" class="message"></div>
     </div>
 </div>
 
 <script>
-    function logout() {
-        $.ajax({
-            url: '/api/auth/logout',
-            method: 'GET',
-            success: function() {
-                window.location.href = 'login.html';
-            }
-        });
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                logout();
+            });
+        }
 
-    $(document).ready(function() {
         loadProfile();
 
-        $('#profileForm').submit(function(e) {
-            e.preventDefault();
-
-            $.ajax({
-                url: '/api/profile/update',
-                method: 'POST',
-                data: {
-                    firstName: $('#firstName').val(),
-                    lastName: $('#lastName').val(),
-                    birthDate: $('#birthDate').val(),
-                    gender: $('#gender').val(),
-                    city: $('#city').val(),
-                    about: $('#about').val()
-                },
-                success: function(data) {
-                    if (data.success) {
-                        $('#message').removeClass('error').addClass('success').text('Профиль сохранен').show();
-                        setTimeout(function() { $('#message').hide(); }, 3000);
-                    } else {
-                        $('#message').removeClass('success').addClass('error').text(data.error).show();
-                    }
-                },
-                error: function() {
-                    $('#message').removeClass('success').addClass('error').text('Ошибка сервера').show();
-                }
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                updateProfile(e);
             });
-        });
+        }
 
-        $('#avatarForm').submit(function(e) {
-            e.preventDefault();
-
-            var formData = new FormData();
-            formData.append('avatar', $('#avatarFile')[0].files[0]);
-
-            $.ajax({
-                url: '/api/profile/upload-avatar',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(data) {
-                    if (data.success) {
-                        $('#avatarMessage').removeClass('error').addClass('success').text('Аватар загружен').show();
-                        setTimeout(function() { $('#avatarMessage').hide(); }, 3000);
-                        if (data.avatarPath) {
-                            $('#avatar').attr('src', data.avatarPath + '?t=' + new Date().getTime());
-                        }
-                    } else {
-                        $('#avatarMessage').removeClass('success').addClass('error').text(data.error).show();
-                    }
-                },
-                error: function() {
-                    $('#avatarMessage').removeClass('success').addClass('error').text('Ошибка загрузки').show();
-                }
+        const avatarForm = document.getElementById('avatarForm');
+        if (avatarForm) {
+            avatarForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                uploadAvatar(e);
             });
-        });
+        }
     });
-
-    function loadProfile() {
-        $.ajax({
-            url: '/api/profile',
-            method: 'GET',
-            success: function(data) {
-                if (data.error) {
-                    window.location.href = '/login.html';
-                    return;
-                }
-
-                $('#firstName').val(data.firstName || '');
-                $('#lastName').val(data.lastName || '');
-                $('#email').val(data.email || '');
-                $('#birthDate').val(data.birthDate || '');
-                $('#gender').val(data.gender || '');
-                $('#city').val(data.city || '');
-                $('#about').val(data.about || '');
-
-                if (data.avatarPath) {
-                    $('#avatar').attr('src', data.avatarPath);
-                } else {
-                    $('#avatar').attr('src', '/images/default-avatar.png');
-                }
-            },
-            error: function() {
-                window.location.href = '/login.html';
-            }
-        });
-    }
 </script>
 </body>
 </html>

@@ -35,6 +35,12 @@ public class FriendshipRepository {
         return updated > 0;
     }
 
+    public boolean removeFriend(int userId, int friendId) {
+        String sql = "DELETE FROM friendships WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)";
+        int deleted = jdbcTemplate.update(sql, userId, friendId, friendId, userId);
+        return deleted > 0;
+    }
+
     public boolean areFriends(int userId1, int userId2) {
         String sql = "SELECT COUNT(*) FROM friendships WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)) AND status = 'ACCEPTED'";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId1, userId2, userId2, userId1);
@@ -49,11 +55,8 @@ public class FriendshipRepository {
 
     public String getFriendshipStatus(int userId1, int userId2) {
         String sql = "SELECT status FROM friendships WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)";
-        try {
-            return jdbcTemplate.queryForObject(sql, String.class, userId1, userId2, userId2, userId1);
-        } catch (Exception e) {
-            return null;
-        }
+        List<String> statuses = jdbcTemplate.queryForList(sql, String.class, userId1, userId2, userId2, userId1);
+        return statuses.isEmpty() ? null : statuses.get(0);
     }
 
     public List<Map<String, Object>> getPendingRequestsForUser(int userId) {

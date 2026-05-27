@@ -2,21 +2,22 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Поиск</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title data-i18n="app.title">Социальная сеть</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/app.js"></script>
+    <script src="/js/i18n.js"></script>
 </head>
 <body>
 <nav class="navbar">
     <div class="nav-container">
-        <h3>Социальная сеть</h3>
+        <h3 data-i18n="app.title">Социальная сеть</h3>
         <ul class="nav-menu">
-            <li><a href="main.html">Лента</a></li>
-            <li><a href="profile.html">Профиль</a></li>
-            <li><a href="friends.html">Друзья</a></li>
-            <li><a href="messages.html">Сообщения</a></li>
-            <li><a href="search.html">Поиск</a></li>
-            <li><a href="#" onclick="logout()">Выход</a></li>
+            <li><a href="main.html" data-i18n="nav.feed">Лента</a></li>
+            <li><a href="profile.html" data-i18n="nav.profile">Профиль</a></li>
+            <li><a href="friends.html" data-i18n="nav.friends">Друзья</a></li>
+            <li><a href="messages.html" data-i18n="nav.messages">Сообщения</a></li>
+            <li><a href="search.html" data-i18n="nav.search">Поиск</a></li>
+            <li><a href="#" id="logoutBtn" data-i18n="app.logout">Выход</a></li>
         </ul>
     </div>
 </nav>
@@ -24,29 +25,33 @@
 <div class="container">
     <div class="search-container">
         <div class="search-tabs">
-            <button class="tab-btn active" onclick="switchTab('users')">Поиск пользователей</button>
-            <button class="tab-btn" onclick="switchTab('news')">Поиск новостей</button>
+            <button id="usersTabBtn" class="tab-btn active" data-i18n="search.users">Поиск пользователей</button>
+            <button id="newsTabBtn" class="tab-btn" data-i18n="search.news">Поиск новостей</button>
         </div>
 
         <div id="usersSearch" class="tab-content active">
-            <h3>Поиск пользователей</h3>
+            <h3 data-i18n="search.users">Поиск пользователей</h3>
             <form id="userSearchForm">
                 <div class="search-row">
-                    <input type="text" id="searchFirstName" placeholder="Имя">
-                    <input type="text" id="searchLastName" placeholder="Фамилия">
-                    <input type="text" id="searchCity" placeholder="Город">
-                    <button type="submit" class="btn btn-primary">Найти</button>
+                    <input type="text" id="searchFirstName" data-i18n-placeholder="search.firstname" placeholder="Имя">
+                    <input type="text" id="searchLastName" data-i18n-placeholder="search.lastname" placeholder="Фамилия">
+                    <input type="text" id="searchCity" data-i18n-placeholder="search.city" placeholder="Город">
+                </div>
+                <div class="search-row">
+                    <input type="number" id="searchAgeFrom" data-i18n-placeholder="search.age_from" placeholder="Возраст от" min="1" max="120">
+                    <input type="number" id="searchAgeTo" data-i18n-placeholder="search.age_to" placeholder="Возраст до" min="1" max="120">
+                    <button type="submit" class="btn btn-primary" data-i18n="app.search">Найти</button>
                 </div>
             </form>
             <div id="userResults" class="search-results"></div>
         </div>
 
         <div id="newsSearch" class="tab-content">
-            <h3>Поиск новостей</h3>
+            <h3 data-i18n="search.news">Поиск новостей</h3>
             <form id="newsSearchForm">
                 <div class="search-row">
-                    <input type="text" id="searchKeyword" placeholder="Ключевые слова">
-                    <button type="submit" class="btn btn-primary">Найти</button>
+                    <input type="text" id="searchKeyword" data-i18n-placeholder="search.keyword" placeholder="Ключевые слова">
+                    <button type="submit" class="btn btn-primary" data-i18n="app.search">Найти</button>
                 </div>
             </form>
             <div id="newsResults" class="search-results"></div>
@@ -55,34 +60,11 @@
 </div>
 
 <script>
-    var currentUserRole = '';
-    var currentUserId = null;
-
-    function logout() {
-        $.ajax({
-            url: '/api/auth/logout',
-            method: 'GET',
-            success: function() {
-                window.location.href = 'login.html';
-            }
-        });
-    }
-
-    function switchTab(tab) {
-        $('.tab-content').removeClass('active');
-        $('.tab-btn').removeClass('active');
-
-        if (tab === 'users') {
-            $('#usersSearch').addClass('active');
-            $('.tab-btn:first').addClass('active');
-        } else {
-            $('#newsSearch').addClass('active');
-            $('.tab-btn:last').addClass('active');
-        }
-    }
+    let currentUserRole = '';
+    let currentUserId = null;
 
     function formatDate(dateString) {
-        var date = new Date(dateString);
+        const date = new Date(dateString);
         return date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
     }
 
@@ -92,173 +74,229 @@
     }
 
     function openMessageWindow(userId, userName) {
-        var url = 'send-message.html?to=' + userId + '&name=' + encodeURIComponent(userName);
-        window.open(url, '_blank', 'width=500,height=500,resizable=yes,scrollbars=yes');
+        window.location.href = 'messages.html?with=' + userId;
     }
 
-    function sendFriendRequest(userId) {
-        $.ajax({
-            url: '/api/friends/request',
-            method: 'POST',
-            data: { toUserId: userId },
-            success: function(data) {
-                if (data.success) {
-                    alert('Заявка отправлена');
-                } else {
-                    alert(data.error || 'Ошибка');
-                }
-            }
-        });
-    }
-
-    function makeModerator(userId) {
-        $.ajax({
-            url: '/api/admin/make-moderator',
-            method: 'POST',
-            data: { userId: userId },
-            success: function(data) {
-                if (data.success) {
-                    alert('Пользователь назначен модератором');
-                    $('#userSearchForm').submit();
-                } else {
-                    alert(data.error || 'Ошибка');
-                }
-            }
-        });
-    }
-
-    function removeModerator(userId) {
-        $.ajax({
-            url: '/api/admin/remove-moderator',
-            method: 'POST',
-            data: { userId: userId },
-            success: function(data) {
-                if (data.success) {
-                    alert('Роль модератора снята');
-                    $('#userSearchForm').submit();
-                } else {
-                    alert(data.error || 'Ошибка');
-                }
-            }
-        });
-    }
-
-    function deleteUser(userId) {
-        if (confirm('Удалить пользователя? Все его новости, комментарии и сообщения будут удалены.')) {
-            $.ajax({
-                url: '/api/admin/delete-user',
+    async function sendFriendRequest(userId) {
+        try {
+            const response = await fetch('/api/friends/request', {
                 method: 'POST',
-                data: { userId: userId },
-                success: function(data) {
-                    if (data.success) {
-                        alert('Пользователь удален');
-                        $('#userSearchForm').submit();
-                    } else {
-                        alert(data.error || 'Ошибка');
-                    }
-                }
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `toUserId=${userId}`
             });
+
+            const data = await response.json();
+            alert(data.success ? t('friends.request_sent') : (data.error || t('friends.request_error')));
+        } catch (error) {
+            alert(t('error.server'));
+        }
+    }
+
+    async function makeModerator(userId) {
+        try {
+            const response = await fetch('/api/admin/make-moderator', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `userId=${userId}`
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert(t('role.make_moderator') + ' ' + t('app.success'));
+                document.getElementById('userSearchForm').dispatchEvent(new Event('submit'));
+            } else {
+                alert(data.error || t('error.server'));
+            }
+        } catch (error) {
+            alert(t('error.server'));
+        }
+    }
+
+    async function removeModerator(userId) {
+        try {
+            const response = await fetch('/api/admin/remove-moderator', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `userId=${userId}`
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert(t('role.remove_moderator') + ' ' + t('app.success'));
+                document.getElementById('userSearchForm').dispatchEvent(new Event('submit'));
+            } else {
+                alert(data.error || t('error.server'));
+            }
+        } catch (error) {
+            alert(t('error.server'));
+        }
+    }
+
+    async function deleteUser(userId) {
+        if (confirm(t('role.delete_confirm'))) {
+            try {
+                const response = await fetch('/api/admin/delete-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `userId=${userId}`
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(t('role.user_deleted'));
+                    document.getElementById('userSearchForm').dispatchEvent(new Event('submit'));
+                } else {
+                    alert(data.error || t('error.server'));
+                }
+            } catch (error) {
+                alert(t('error.server'));
+            }
         }
     }
 
     function renderUserCard(user) {
-        var age = '';
-        if (user.birthDate) {
-            var birth = new Date(user.birthDate);
-            var today = new Date();
-            age = today.getFullYear() - birth.getFullYear();
-        }
+        const age = user.age ? `<p>${t('profile.age')}: ${user.age}</p>` : '';
 
-        var adminButtons = '';
+        let adminButtons = '';
         if (currentUserRole === 'ADMIN' && user.id !== currentUserId) {
             if (user.role === 'MODERATOR') {
-                adminButtons = '<button onclick="removeModerator(' + user.id + ')" class="btn btn-small">Снять модератора</button>';
+                adminButtons = `<button onclick="removeModerator(${user.id})" class="btn btn-small">${t('role.remove_moderator')}</button>`;
             } else if (user.role === 'USER') {
-                adminButtons = '<button onclick="makeModerator(' + user.id + ')" class="btn btn-small">Назначить модератором</button>';
+                adminButtons = `<button onclick="makeModerator(${user.id})" class="btn btn-small">${t('role.make_moderator')}</button>`;
             }
-            adminButtons += '<button onclick="deleteUser(' + user.id + ')" class="btn btn-danger btn-small">Удалить пользователя</button>';
+            adminButtons += `<button onclick="deleteUser(${user.id})" class="btn btn-danger btn-small">${t('role.delete_user')}</button>`;
         }
 
-        var html = '<div class="user-card" id="user-' + user.id + '">' +
-            '<h4>' + escapeHtml(user.firstName) + ' ' + escapeHtml(user.lastName) + '</h4>' +
-            '<p>Email: ' + escapeHtml(user.email) + '</p>' +
-            '<p>Город: ' + (user.city || 'Не указан') + '</p>' +
-            (age ? '<p>Возраст: ' + age + '</p>' : '') +
-            '<p>Роль: ' + (user.role === 'ADMIN' ? 'Администратор' : (user.role === 'MODERATOR' ? 'Модератор' : 'Пользователь')) + '</p>' +
-            '<button onclick="sendFriendRequest(' + user.id + ')" class="btn btn-small">Добавить в друзья</button>' +
-            '<button onclick="openMessageWindow(' + user.id + ', \'' + escapeHtml(user.firstName) + ' ' + escapeHtml(user.lastName) + '\')" class="btn btn-small">Написать сообщение</button>' +
-            adminButtons +
-        '</div>';
+        let roleText = '';
+        if (user.role === 'ADMIN') roleText = t('role.admin');
+        else if (user.role === 'MODERATOR') roleText = t('role.moderator');
+        else roleText = t('role.user');
 
-        $('#userResults').append(html);
+        const html = `
+            <div class="user-card" id="user-${user.id}">
+                <h4>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</h4>
+                <p>${t('profile.email')}: ${escapeHtml(user.email)}</p>
+                <p>${t('profile.city')}: ${user.city || t('profile.city.not_specified')}</p>
+                ${age}
+                <p>${t('profile.role')}: ${roleText}</p>
+                <button onclick="sendFriendRequest(${user.id})" class="btn btn-small">${t('friends.add')}</button>
+                <button onclick="openMessageWindow(${user.id}, '${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}')" class="btn btn-small">${t('messages.send')}</button>
+                ${adminButtons}
+            </div>
+        `;
+
+        document.getElementById('userResults').insertAdjacentHTML('beforeend', html);
     }
 
-    function renderNewsItem(news) {
-        var html = '<div class="news-item">' +
-            '<h4>' + escapeHtml(news.title) + '</h4>' +
-            '<p>' + escapeHtml(news.content) + '</p>' +
-            '<small>Автор: ' + escapeHtml(news.authorName) + ' | ' + formatDate(news.createdAt) + '</small>' +
-        '</div>';
-        $('#newsResults').append(html);
+    async function renderNewsItem(news) {
+        const html = `
+            <div class="news-item">
+                <h4>${escapeHtml(news.title)}</h4>
+                <p>${escapeHtml(news.content)}</p>
+                <small>${t('news.author')}: ${escapeHtml(news.authorName)} | ${formatDate(news.createdAt)}</small>
+            </div>
+        `;
+        document.getElementById('newsResults').insertAdjacentHTML('beforeend', html);
     }
 
-    $(document).ready(function() {
-        $.ajax({
-            url: '/api/auth/me',
-            method: 'GET',
-            success: function(data) {
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
+    document.addEventListener('DOMContentLoaded', async () => {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                logout();
+            });
+        }
+
+        const authResponse = await fetch('/api/auth/me');
+        const authData = await authResponse.json();
+        if (!authData.authenticated) {
+            window.location.href = 'login.html';
+        }
+        currentUserRole = authData.role || 'USER';
+        currentUserId = authData.userId;
+
+        const usersTabBtn = document.getElementById('usersTabBtn');
+        const newsTabBtn = document.getElementById('newsTabBtn');
+        const usersSearch = document.getElementById('usersSearch');
+        const newsSearch = document.getElementById('newsSearch');
+
+        usersTabBtn.addEventListener('click', () => {
+            usersTabBtn.classList.add('active');
+            newsTabBtn.classList.remove('active');
+            usersSearch.classList.add('active');
+            newsSearch.classList.remove('active');
+        });
+
+        newsTabBtn.addEventListener('click', () => {
+            newsTabBtn.classList.add('active');
+            usersTabBtn.classList.remove('active');
+            newsSearch.classList.add('active');
+            usersSearch.classList.remove('active');
+        });
+
+        const userSearchForm = document.getElementById('userSearchForm');
+        userSearchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const firstName = document.getElementById('searchFirstName').value;
+            const lastName = document.getElementById('searchLastName').value;
+            const city = document.getElementById('searchCity').value;
+            const ageFrom = document.getElementById('searchAgeFrom').value;
+            const ageTo = document.getElementById('searchAgeTo').value;
+
+            let url = `/api/users/search?firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&city=${encodeURIComponent(city)}`;
+            if (ageFrom) url += `&ageFrom=${ageFrom}`;
+            if (ageTo) url += `&ageTo=${ageTo}`;
+
+            try {
+                const response = await fetch(url);
+                const users = await response.json();
+                const container = document.getElementById('userResults');
+                container.innerHTML = '';
+
+                if (users.length === 0) {
+                    container.innerHTML = `<p>${t('search.no_users')}</p>`;
+                } else {
+                    for (const user of users) {
+                        renderUserCard(user);
+                    }
                 }
-                currentUserRole = data.role || 'USER';
-                currentUserId = data.userId;
+            } catch (error) {
+                document.getElementById('userResults').innerHTML = `<p>${t('search.error')}</p>`;
             }
         });
 
-        $('#userSearchForm').submit(function(e) {
+        const newsSearchForm = document.getElementById('newsSearchForm');
+        newsSearchForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            $.ajax({
-                url: '/api/users/search',
-                method: 'GET',
-                data: {
-                    firstName: $('#searchFirstName').val(),
-                    lastName: $('#searchLastName').val(),
-                    city: $('#searchCity').val()
-                },
-                success: function(users) {
-                    $('#userResults').empty();
-                    if (users.length === 0) {
-                        $('#userResults').html('<p>Пользователи не найдены</p>');
-                    } else {
-                        for (var i = 0; i < users.length; i++) {
-                            renderUserCard(users[i]);
-                        }
+            const keyword = document.getElementById('searchKeyword').value;
+
+            try {
+                const response = await fetch(`/api/news/search?keyword=${encodeURIComponent(keyword)}`);
+                const newsList = await response.json();
+                const container = document.getElementById('newsResults');
+                container.innerHTML = '';
+
+                if (newsList.length === 0) {
+                    container.innerHTML = `<p>${t('search.no_news')}</p>`;
+                } else {
+                    for (const news of newsList) {
+                        await renderNewsItem(news);
                     }
                 }
-            });
-        });
-
-        $('#newsSearchForm').submit(function(e) {
-            e.preventDefault();
-
-            $.ajax({
-                url: '/api/news/search',
-                method: 'GET',
-                data: {
-                    keyword: $('#searchKeyword').val()
-                },
-                success: function(newsList) {
-                    $('#newsResults').empty();
-                    if (newsList.length === 0) {
-                        $('#newsResults').html('<p>Новости не найдены</p>');
-                    } else {
-                        for (var i = 0; i < newsList.length; i++) {
-                            renderNewsItem(newsList[i]);
-                        }
-                    }
-                }
-            });
+            } catch (error) {
+                document.getElementById('newsResults').innerHTML = `<p>${t('search.error')}</p>`;
+            }
         });
     });
 </script>

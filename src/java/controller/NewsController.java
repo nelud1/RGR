@@ -3,6 +3,8 @@ package controller;
 import model.News;
 import service.NewsService;
 import service.FileStorageService;
+import validation.NewsValidator;
+import validation.ValidationErrors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +35,13 @@ public class NewsController {
         if (userId == null) {
             response.put("success", false);
             response.put("error", "Не авторизован");
+            return response;
+        }
+
+        ValidationErrors errors = NewsValidator.validateCreateNews(title, content, accessLevel);
+        if (errors.hasErrors()) {
+            response.put("success", false);
+            response.put("error", errors.getFirstError());
             return response;
         }
 
@@ -70,6 +79,11 @@ public class NewsController {
         return newsService.getFeed(userId, userRole);
     }
 
+    @GetMapping("/search")
+    public List<Map<String, Object>> searchNews(@RequestParam String keyword) {
+        return newsService.searchNews(keyword);
+    }
+
     @PostMapping("/{newsId}/comment")
     public Map<String, Object> addComment(@PathVariable int newsId,
                                           @RequestParam String content,
@@ -83,9 +97,10 @@ public class NewsController {
             return response;
         }
 
-        if (content.length() > 100) {
+        ValidationErrors errors = NewsValidator.validateComment(content);
+        if (errors.hasErrors()) {
             response.put("success", false);
-            response.put("error", "Комментарий не должен превышать 100 символов");
+            response.put("error", errors.getFirstError());
             return response;
         }
 

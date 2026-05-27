@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 @Repository
 public class ProfileRepository {
@@ -21,11 +22,8 @@ public class ProfileRepository {
 
     public Profile findByUserId(int userId) {
         String sql = "SELECT * FROM profiles WHERE user_id = ?";
-        try {
-            return jdbcTemplate.queryForObject(sql, new ProfileRowMapper(), userId);
-        } catch (Exception e) {
-            return null;
-        }
+        List<Profile> profiles = jdbcTemplate.query(sql, new ProfileRowMapper(), userId);
+        return profiles.isEmpty() ? null : profiles.get(0);
     }
 
     public void update(Profile profile) {

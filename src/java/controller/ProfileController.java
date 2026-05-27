@@ -4,6 +4,8 @@ import model.Profile;
 import model.User;
 import service.UserService;
 import service.FileStorageService;
+import validation.ProfileValidator;
+import validation.ValidationErrors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -98,16 +100,10 @@ public class ProfileController {
             return response;
         }
 
-        if (avatar == null || avatar.isEmpty()) {
+        ValidationErrors errors = ProfileValidator.validateFile(avatar);
+        if (errors.hasErrors()) {
             response.put("success", false);
-            response.put("error", "Файл не выбран");
-            return response;
-        }
-
-        String contentType = avatar.getContentType();
-        if (!"image/jpeg".equals(contentType) && !"image/png".equals(contentType)) {
-            response.put("success", false);
-            response.put("error", "Только JPG и PNG");
+            response.put("error", errors.getFirstError());
             return response;
         }
 

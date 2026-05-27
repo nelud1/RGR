@@ -71,8 +71,6 @@ public class FriendController {
             return response;
         }
 
-        System.out.println("Accepting request: fromUserId=" + fromUserId + ", toUserId=" + userId);
-
         boolean success = friendshipRepository.acceptRequest(fromUserId, userId);
         if (success) {
             response.put("success", true);
@@ -80,6 +78,28 @@ public class FriendController {
         } else {
             response.put("success", false);
             response.put("error", "Не удалось принять заявку");
+        }
+        return response;
+    }
+
+    @PostMapping("/remove")
+    public Map<String, Object> removeFriend(@RequestParam int friendId, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        Integer userId = (Integer) session.getAttribute("userId");
+
+        if (userId == null) {
+            response.put("success", false);
+            response.put("error", "Не авторизован");
+            return response;
+        }
+
+        boolean success = friendshipRepository.removeFriend(userId, friendId);
+        if (success) {
+            response.put("success", true);
+            response.put("message", "Друг удален");
+        } else {
+            response.put("success", false);
+            response.put("error", "Не удалось удалить друга");
         }
         return response;
     }

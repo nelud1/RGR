@@ -22,32 +22,19 @@ public class NewsRepository {
 
     public News findById(int id) {
         String sql = "SELECT * FROM news WHERE id = ?";
-        try {
-            return jdbcTemplate.queryForObject(sql, new NewsRowMapper(), id);
-        } catch (Exception e) {
-            return null;
-        }
+        List<News> news = jdbcTemplate.query(sql, new NewsRowMapper(), id);
+        return news.isEmpty() ? null : news.get(0);
     }
 
     public News findLastByAuthorId(int authorId) {
         String sql = "SELECT * FROM news WHERE author_id = ? ORDER BY id DESC LIMIT 1";
-        try {
-            return jdbcTemplate.queryForObject(sql, new NewsRowMapper(), authorId);
-        } catch (Exception e) {
-            return null;
-        }
+        List<News> news = jdbcTemplate.query(sql, new NewsRowMapper(), authorId);
+        return news.isEmpty() ? null : news.get(0);
     }
-
-
 
     public void updateImage(int newsId, String imagePath) {
         String sql = "UPDATE news SET image_path = ? WHERE id = ?";
         jdbcTemplate.update(sql, imagePath, newsId);
-    }
-
-    public List<News> findAllByAuthorId(int authorId) {
-        String sql = "SELECT * FROM news WHERE author_id = ? ORDER BY created_at DESC";
-        return jdbcTemplate.query(sql, new NewsRowMapper(), authorId);
     }
 
     public List<News> findFeedForUser(int userId, List<Integer> friendIds, boolean isModerator) {
@@ -77,7 +64,7 @@ public class NewsRepository {
     }
 
     public List<News> searchByKeyword(String keyword) {
-        String sql = "SELECT * FROM news WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC";
+        String sql = "SELECT * FROM news WHERE LOWER(title) LIKE LOWER(?) OR LOWER(content) LIKE LOWER(?) ORDER BY created_at DESC";
         String searchPattern = "%" + keyword + "%";
         return jdbcTemplate.query(sql, new NewsRowMapper(), searchPattern, searchPattern);
     }
@@ -85,11 +72,6 @@ public class NewsRepository {
     public void deleteById(int id) {
         String sql = "DELETE FROM news WHERE id = ?";
         jdbcTemplate.update(sql, id);
-    }
-
-    public void deleteByAuthorId(int authorId) {
-        String sql = "DELETE FROM news WHERE author_id = ?";
-        jdbcTemplate.update(sql, authorId);
     }
 
     private static class NewsRowMapper implements RowMapper<News> {

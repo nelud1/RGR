@@ -1,12 +1,8 @@
 package repository;
 
-import model.Rating;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 @Repository
 public class RatingRepository {
@@ -50,17 +46,5 @@ public class RatingRepository {
     public void deleteByNewsId(int newsId) {
         String sql = "DELETE FROM news_ratings WHERE news_id = ?";
         jdbcTemplate.update(sql, newsId);
-    }
-
-    private static class RatingRowMapper implements RowMapper<Rating> {
-        @Override
-        public Rating mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Rating rating = new Rating();
-            rating.setNewsId(rs.getInt("news_id"));
-            rating.setUserId(rs.getInt("user_id"));
-            rating.setRating(rs.getInt("rating"));
-            rating.setCreatedAt(rs.getString("created_at"));
-            return rating;
-        }
     }
 }

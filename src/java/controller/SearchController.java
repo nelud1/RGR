@@ -6,6 +6,9 @@ import service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,10 +21,25 @@ public class SearchController {
     @Autowired
     private UserService userService;
 
+    private int calculateAge(String birthDate) {
+        if (birthDate == null || birthDate.isEmpty()) {
+            return -1;
+        }
+        try {
+            LocalDate birth = LocalDate.parse(birthDate);
+            LocalDate now = LocalDate.now();
+            return Period.between(birth, now).getYears();
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
     @GetMapping("/users/search")
     public List<Map<String, Object>> searchUsers(@RequestParam(required = false) String firstName,
                                                  @RequestParam(required = false) String lastName,
                                                  @RequestParam(required = false) String city,
+                                                 @RequestParam(required = false) Integer ageFrom,
+                                                 @RequestParam(required = false) Integer ageTo,
                                                  HttpSession session) {
         Integer currentUserId = (Integer) session.getAttribute("userId");
         List<Map<String, Object>> results = new ArrayList<>();
@@ -40,17 +58,29 @@ public class SearchController {
 
             boolean match = true;
             if (firstName != null && !firstName.isEmpty()) {
-                if (!profile.getFirstName().toLowerCase().contains(firstName.toLowerCase())) {
+                String dbFirstName = profile.getFirstName() != null ? profile.getFirstName().toLowerCase() : "";
+                if (!dbFirstName.contains(firstName.toLowerCase())) {
                     match = false;
                 }
             }
             if (match && lastName != null && !lastName.isEmpty()) {
-                if (!profile.getLastName().toLowerCase().contains(lastName.toLowerCase())) {
+                String dbLastName = profile.getLastName() != null ? profile.getLastName().toLowerCase() : "";
+                if (!dbLastName.contains(lastName.toLowerCase())) {
                     match = false;
                 }
             }
             if (match && city != null && !city.isEmpty()) {
-                if (profile.getCity() == null || !profile.getCity().toLowerCase().contains(city.toLowerCase())) {
+                String dbCity = profile.getCity() != null ? profile.getCity().toLowerCase() : "";
+                if (!dbCity.contains(city.toLowerCase())) {
+                    match = false;
+                }
+            }
+            if (match && (ageFrom != null || ageTo != null)) {
+                int age = calculateAge(profile.getBirthDate());
+                if (ageFrom != null && age < ageFrom) {
+                    match = false;
+                }
+                if (match && ageTo != null && age > ageTo) {
                     match = false;
                 }
             }
@@ -63,6 +93,7 @@ public class SearchController {
                 result.put("role", user.getRole());
                 result.put("city", profile.getCity());
                 result.put("birthDate", profile.getBirthDate());
+                result.put("age", calculateAge(profile.getBirthDate()));
                 result.put("email", user.getEmail());
                 results.add(result);
             }

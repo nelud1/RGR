@@ -29,16 +29,11 @@ public class UserService {
     @Autowired
     private EmailService emailService;
 
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
     public boolean register(UserRegistrationDto dto) {
-        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
-            return false;
-        }
-
-        User existing = userRepository.findByEmail(dto.getEmail());
-        if (existing != null) {
-            return false;
-        }
-
         User user = new User();
         user.setEmail(dto.getEmail().toLowerCase());
         user.setPasswordHash(passwordHasher.hash(dto.getPassword()));

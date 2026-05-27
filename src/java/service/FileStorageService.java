@@ -1,5 +1,6 @@
 package service;
 
+import exception.FileUploadException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,19 +30,19 @@ public class FileStorageService {
                 Files.createDirectories(newsPath);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось создать папки для загрузок", e);
+            throw new FileUploadException("Не удалось создать папки для загрузок", e);
         }
     }
 
     private void validateFileName(String filename) {
         if (filename == null || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-            throw new RuntimeException("Недопустимое имя файла");
+            throw new FileUploadException("Недопустимое имя файла");
         }
     }
 
     private void validateFilePath(Path filePath) {
         if (!filePath.toAbsolutePath().startsWith(Paths.get(uploadPath).toAbsolutePath())) {
-            throw new RuntimeException("Попытка выхода за пределы разрешенной директории");
+            throw new FileUploadException("Попытка выхода за пределы разрешенной директории");
         }
     }
 
@@ -55,7 +56,7 @@ public class FileStorageService {
 
         String contentType = file.getContentType();
         if (!"image/jpeg".equals(contentType) && !"image/png".equals(contentType)) {
-            throw new RuntimeException("Только JPG и PNG");
+            throw new FileUploadException("Только JPG и PNG");
         }
 
         try {
@@ -71,7 +72,7 @@ public class FileStorageService {
             Files.write(filePath, file.getBytes());
             return "/uploads/avatars/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось сохранить аватар", e);
+            throw new FileUploadException("Не удалось сохранить аватар", e);
         }
     }
 
@@ -85,7 +86,7 @@ public class FileStorageService {
 
         String contentType = file.getContentType();
         if (!"image/jpeg".equals(contentType) && !"image/png".equals(contentType)) {
-            throw new RuntimeException("Только JPG и PNG");
+            throw new FileUploadException("Только JPG и PNG");
         }
 
         try {
@@ -101,7 +102,7 @@ public class FileStorageService {
             Files.write(filePath, file.getBytes());
             return "/uploads/news/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось сохранить изображение новости", e);
+            throw new FileUploadException("Не удалось сохранить изображение новости", e);
         }
     }
 }
