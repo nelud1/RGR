@@ -29,7 +29,7 @@ function applyTranslations() {
             element.textContent = t(key);
         }
     });
-
+    
     document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
         const key = element.getAttribute('data-i18n-placeholder');
         if (key && translations[key]) {
