@@ -1,18 +1,20 @@
-function loadNewsFeed() {
-    fetch('/api/news/feed')
-        .then(response => response.json())
-        .then(newsList => {
-            const container = document.getElementById('newsFeed');
-            if (!container) return;
-            container.innerHTML = '';
-            if (newsList.length === 0) {
-                container.innerHTML = '<p>Нет новостей</p>';
-            } else {
-                for (let i = 0; i < newsList.length; i++) {
-                    renderNewsItem(newsList[i]);
-                }
+async function loadNewsFeed() {
+    try {
+        const response = await fetch('/api/news/feed');
+        const newsList = await response.json();
+        const container = document.getElementById('newsFeed');
+        if (!container) return;
+        container.innerHTML = '';
+        if (newsList.length === 0) {
+            container.innerHTML = '<p>Нет новостей</p>';
+        } else {
+            for (let i = 0; i < newsList.length; i++) {
+                renderNewsItem(newsList[i]);
             }
-        });
+        }
+    } catch (error) {
+        console.error('Error loading news feed:', error);
+    }
 }
 
 function renderNewsItem(news) {
@@ -50,77 +52,86 @@ function renderNewsItem(news) {
     loadComments(news.id);
 }
 
-function loadComments(newsId) {
-    fetch('/api/news/' + newsId + '/comments')
-        .then(response => response.json())
-        .then(comments => {
-            const container = document.getElementById('comments-' + newsId);
-            if (!container) return;
-            container.innerHTML = '';
-            for (let i = 0; i < comments.length; i++) {
-                const comment = comments[i];
-                const commentHtml = '<div class="comment">' +
-                    '<strong>' + escapeHtml(comment.authorName) + ':</strong> ' + escapeHtml(comment.content) +
-                    '<br><small>' + formatDate(comment.createdAt) + '</small>' +
-                '</div>';
-                container.insertAdjacentHTML('beforeend', commentHtml);
-            }
-        });
+async function loadComments(newsId) {
+    try {
+        const response = await fetch('/api/news/' + newsId + '/comments');
+        const comments = await response.json();
+        const container = document.getElementById('comments-' + newsId);
+        if (!container) return;
+        container.innerHTML = '';
+        for (let i = 0; i < comments.length; i++) {
+            const comment = comments[i];
+            const commentHtml = '<div class="comment">' +
+                '<strong>' + escapeHtml(comment.authorName) + ':</strong> ' + escapeHtml(comment.content) +
+                '<br><small>' + formatDate(comment.createdAt) + '</small>' +
+            '</div>';
+            container.insertAdjacentHTML('beforeend', commentHtml);
+        }
+    } catch (error) {
+        console.error('Error loading comments:', error);
+    }
 }
 
-function addComment(newsId) {
+async function addComment(newsId) {
     const input = document.getElementById('comment-input-' + newsId);
     const content = input ? input.value : '';
     if (!content) return;
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/news/' + newsId + '/comment', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            const data = JSON.parse(xhr.responseText);
-            if (data.success) {
-                if (input) input.value = '';
-                loadComments(newsId);
-            }
+    try {
+        const response = await fetch('/api/news/' + newsId + '/comment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'content=' + encodeURIComponent(content)
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (input) input.value = '';
+            loadComments(newsId);
         }
-    };
-    xhr.send('content=' + encodeURIComponent(content));
+    } catch (error) {
+        console.error('Error adding comment:', error);
+    }
 }
 
-function likeNews(newsId) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/news/' + newsId + '/like', true);
-    xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4 && xhr.status === 200) {
+async function likeNews(newsId) {
+    try {
+        const response = await fetch('/api/news/' + newsId + '/like', {
+            method: 'POST'
+        });
+        if (response.ok) {
             loadNewsFeed();
         }
-    };
-    xhr.send();
+    } catch (error) {
+        console.error('Error liking news:', error);
+    }
 }
 
-function dislikeNews(newsId) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/news/' + newsId + '/dislike', true);
-    xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4 && xhr.status === 200) {
+async function dislikeNews(newsId) {
+    try {
+        const response = await fetch('/api/news/' + newsId + '/dislike', {
+            method: 'POST'
+        });
+        if (response.ok) {
             loadNewsFeed();
         }
-    };
-    xhr.send();
+    } catch (error) {
+        console.error('Error disliking news:', error);
+    }
 }
 
-function deleteNews(newsId) {
+async function deleteNews(newsId) {
     if (confirm('Удалить новость?')) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('DELETE', '/api/news/' + newsId, true);
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4 && xhr.status === 200) {
+        try {
+            const response = await fetch('/api/news/' + newsId, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
                 const newsElement = document.getElementById('news-' + newsId);
                 if (newsElement) newsElement.remove();
             }
-        };
-        xhr.send();
+        } catch (error) {
+            console.error('Error deleting news:', error);
+        }
     }
 }
 
@@ -132,7 +143,7 @@ function initNews() {
 
     const newsForm = document.getElementById('newsForm');
     if (newsForm) {
-        newsForm.addEventListener('submit', (e) => {
+        newsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const formData = new FormData();
@@ -144,23 +155,24 @@ function initNews() {
                 formData.append('image', imageFile.files[0]);
             }
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/news/create', true);
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    const data = JSON.parse(xhr.responseText);
-                    if (data.success) {
-                        document.getElementById('newsTitle').value = '';
-                        document.getElementById('newsContent').value = '';
-                        if (imageFile) imageFile.value = '';
-                        showMessage('Новость опубликована', 'success', 'newsMessage');
-                        loadNewsFeed();
-                    } else {
-                        showMessage(data.error, 'error', 'newsMessage');
-                    }
+            try {
+                const response = await fetch('/api/news/create', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('newsTitle').value = '';
+                    document.getElementById('newsContent').value = '';
+                    if (imageFile) imageFile.value = '';
+                    showMessage('Новость опубликована', 'success', 'newsMessage');
+                    loadNewsFeed();
+                } else {
+                    showMessage(data.error, 'error', 'newsMessage');
                 }
-            };
-            xhr.send(formData);
+            } catch (error) {
+                showMessage('Ошибка сервера', 'error', 'newsMessage');
+            }
         });
     }
 }

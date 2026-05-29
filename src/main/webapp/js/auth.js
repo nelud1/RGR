@@ -1,16 +1,18 @@
 function initAuth() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
+        logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', '/api/auth/logout', true);
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'GET'
+                });
+                if (response.ok) {
                     window.location.href = 'index.html';
                 }
-            };
-            xhr.send();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
         });
     }
 

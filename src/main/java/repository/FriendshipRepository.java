@@ -17,15 +17,18 @@ public class FriendshipRepository {
             return false;
         }
 
+        int user1 = Math.min(fromUserId, toUserId);
+        int user2 = Math.max(fromUserId, toUserId);
+
         String checkSql = "SELECT COUNT(*) FROM friendships WHERE user_id_1 = ? AND user_id_2 = ?";
-        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, fromUserId, toUserId);
+        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, user1, user2);
 
         if (count != null && count > 0) {
             return false;
         }
 
         String sql = "INSERT INTO friendships (user_id_1, user_id_2, status) VALUES (?, ?, 'PENDING')";
-        jdbcTemplate.update(sql, fromUserId, toUserId);
+        jdbcTemplate.update(sql, user1, user2);
         return true;
     }
 
